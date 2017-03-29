@@ -26,6 +26,9 @@ from google.protobuf import text_format
 
 import caffe
 
+caffe.set_device(0)
+caffe.set_mode_gpu()
+
 parser = OptionParser()
 parser.add_option("-i", "--iterations", dest="iterations", type="int", default=10,
                   help="Iterations")

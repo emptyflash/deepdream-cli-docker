@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ubuntu:trusty
+FROM nvidia/cuda:8.0-cudnn5-devel
 
 RUN mkdir /deepdream
 WORKDIR /deepdream
@@ -34,10 +34,13 @@ RUN apt-get -q update && \
 # Download and compile Caffe
 RUN git clone https://github.com/BVLC/caffe
 RUN cd caffe && \
-  cp Makefile.config.example Makefile.config && echo "CPU_ONLY := 1" >> Makefile.config && \
+  cp Makefile.config.example Makefile.config && \
+  echo "USE_CUDNN := 1" >> Makefile.config && \
+  echo "INCLUDE_DIRS += /usr/include/hdf5/serial/" >> Makefile.config && \
+  echo "LIBRARY_DIRS += /usr/lib/x86_64-linux-gnu/hdf5/serial/" >> Makefile.config && \
   make all -j2
 RUN pip install -U pip
-RUN pip install cython
+RUN pip install cython setuptools
 RUN cd caffe && \
   pip install --requirement python/requirements.txt 
 RUN cd caffe && make pycaffe -j2
@@ -51,8 +54,8 @@ RUN apt-get -q update && \
   apt-get clean && \
   rm /var/lib/apt/lists/*_*
 
-ENV LD_LIBRARY_PATH=/deepdream/caffe/distribute/lib
-ENV PYTHONPATH=/deepdream/caffe/distribute/python
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/deepdream/caffe/distribute/lib
+ENV PYTHONPATH=$PYTHONPATH:/deepdream/caffe/distribute/python
 
 ADD deepdream.py deepdream.py
 
