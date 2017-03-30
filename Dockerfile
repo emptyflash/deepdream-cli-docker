@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM nvidia/cuda:8.0-cudnn5-devel
+FROM nvidia/caffe
 
 RUN mkdir /deepdream
 WORKDIR /deepdream
@@ -23,28 +23,12 @@ RUN apt-get -q update && \
     ca-certificates \
     git \
     python python-pip \
-    python-dev libpython-dev \
-    python-numpy python-scipy python-imaging \
-    ipython ipython-notebook \
-    libprotobuf-dev libleveldb-dev libsnappy-dev libopencv-dev libhdf5-serial-dev libboost-all-dev \
-    libatlas-base-dev libgflags-dev libgoogle-glog-dev liblmdb-dev protobuf-compiler && \
+    python-numpy python-scipy python-imaging && \
   apt-get clean && \
   rm /var/lib/apt/lists/*_*
 
 # Download and compile Caffe
 RUN git clone https://github.com/BVLC/caffe
-RUN cd caffe && \
-  cp Makefile.config.example Makefile.config && \
-  echo "USE_CUDNN := 1" >> Makefile.config && \
-  echo "INCLUDE_DIRS += /usr/include/hdf5/serial/" >> Makefile.config && \
-  echo "LIBRARY_DIRS += /usr/lib/x86_64-linux-gnu/hdf5/serial/" >> Makefile.config && \
-  make all -j2
-RUN pip install -U pip
-RUN pip install cython setuptools
-RUN cd caffe && \
-  pip install --requirement python/requirements.txt 
-RUN cd caffe && make pycaffe -j2
-RUN cd caffe && make distribute
 RUN cd caffe/scripts && ./download_model_binary.py ../models/bvlc_googlenet/
 
 RUN pip install protobuf && pip install tornado --upgrade
@@ -53,9 +37,6 @@ RUN apt-get -q update && \
     python-jsonschema && \
   apt-get clean && \
   rm /var/lib/apt/lists/*_*
-
-ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/deepdream/caffe/distribute/lib
-ENV PYTHONPATH=$PYTHONPATH:/deepdream/caffe/distribute/python
 
 ADD deepdream.py deepdream.py
 

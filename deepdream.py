@@ -32,6 +32,8 @@ caffe.set_mode_gpu()
 parser = OptionParser()
 parser.add_option("-i", "--iterations", dest="iterations", type="int", default=10,
                   help="Iterations")
+parser.add_option("-p", "--passes", dest="passes", type="int", default=1,
+                  help="Number of passes")
 parser.add_option("-o", "--octaves", dest="octaves", type="int", default=4,
                   help="Octatves")
 parser.add_option("-s", "--scale", dest="scale", type="float", default=1.4,
@@ -131,9 +133,18 @@ def deepdream(net, base_img, iter_n=10, octave_n=4, octave_scale=1.4,
     # returning the resulting image
     return deprocess(net, src.data[0])
 
-if options.layers:
-    pprint(net.blobs.keys())
-else:
-    img = np.float32(PIL.Image.open(StringIO(sys.stdin.read())))
-    out = deepdream(net, img, end=options.layer, iter_n=options.iterations, octave_n=options.octaves, octave_scale=options.scale)
-    showarray(out)
+if __name__ == "__main__":
+    if options.layers:
+        pprint(net.blobs.keys())
+    else:
+        start_img = np.float32(PIL.Image.open(StringIO(sys.stdin.read())))
+        img = start_img
+        print >> sys.stderr, str(options.passes)
+        for i in xrange(0, options.passes):
+            try:
+                print >> sys.stderr, str(i)
+                out = deepdream(net, img, end=options.layer, iter_n=options.iterations, octave_n=options.octaves, octave_scale=options.scale)
+                img = out
+            except KeyboardInterrupt:
+                break
+        showarray(out)
